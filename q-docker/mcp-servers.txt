@@ -1,0 +1,17 @@
+# MCP Server Configuration File for Amazon Q CLI
+# Each line should contain a complete `q mcp add` or `q mcp add-json` command.
+# Use `${VAR_NAME}` for environment variable substitution from your .env file.
+# Lines starting with # are comments and will be ignored.
+
+# --- Examples ---
+
+# Filesystem access (no environment variables needed)
+# Installs a server named 'fs' that can interact with the local filesystem.
+q mcp add --agent default --name fs --command "npx -y @modelcontextprotocol/server-filesystem"
+
+# GitHub integration (requires GITHUB_TOKEN in .env)
+# Installs a server named 'github' for interacting with GitHub repositories.
+# q mcp add-json --agent default --name github --force '{"command":"npx","args":["-y","@modelcontextprotocol/server-github"],"env":{"GITHUB_TOKEN":"${GITHUB_TOKEN}"}}'
+
+# Add your desired MCP servers below:
+
