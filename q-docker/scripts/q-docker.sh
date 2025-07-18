@@ -30,41 +30,68 @@ HOST_Q_CONFIG_DIR="$HOME/.aws/amazonq"
 mkdir -p "$HOST_Q_SHARE_DIR"
 mkdir -p "$HOST_Q_CONFIG_DIR"
 
+# --- Load environment variables from .env file --- #
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    echo "✓ Found .env file. Loading environment variables..."
+    set -a # Automatically export all variables
+    source "$PROJECT_ROOT/.env" 2>/dev/null || true
+    set +a # Stop automatically exporting
+else
+    echo "⚠️  No .env file found at $PROJECT_ROOT/.env"
+fi
+
 # --- Build the Docker image if it doesn't exist --- #
 if ! docker image inspect "$IMAGE_NAME:latest" >/dev/null 2>&1; then
     echo "Building Docker image for Amazon Q CLI ($IMAGE_NAME)..."
     # Pass environment variables from .env as build arguments
     if [ -f "$PROJECT_ROOT/.env" ]; then
-        BUILD_ARGS+=$(sed 's/^/ --build-arg /' "$PROJECT_ROOT/.env" | tr '\n' ' ')
+        # Use a loop to add each variable from .env as a build-arg
+        while IFS= read -r line; do
+            # Skip comments and empty lines
+            if [[ "$line" =~ ^#.* ]] || [[ -z "$line" ]]; then
+                continue
+            fi
+            # Extract variable name (before =)
+            VAR_NAME=$(echo "$line" | cut -d '=' -f 1)
+            BUILD_ARGS+=("--build-arg" "$VAR_NAME")
+        done < "$PROJECT_ROOT/.env"
     fi
 
-    eval "docker build $NO_CACHE $BUILD_ARGS -t \"$IMAGE_NAME:latest\" \"$PROJECT_ROOT\""
+    docker build $NO_CACHE "${BUILD_ARGS[@]}" -t "$IMAGE_NAME:latest" "$PROJECT_ROOT"
 fi
 
 # --- Prepare Docker run arguments --- #
-# Mount the current project directory
-MOUNT_ARGS="-v \"$CURRENT_DIR:/workspace\""
+RUN_ARGS=(
+    -it
+    --rm
+    -v "$CURRENT_DIR:/workspace"
+    -v "$HOST_Q_SHARE_DIR/data.sqlite3:/home/q-user/.local/share/amazon-q/data.sqlite3"
+    -v "$HOST_Q_SHARE_DIR/settings.json:/home/q-user/.local/share/amazon-q/settings.json"
+    -v "$HOST_Q_CONFIG_DIR:/home/q-user/.aws/amazonq"
+)
 
-# Mount the authentication database and settings
-MOUNT_ARGS+=" -v \"$HOST_Q_SHARE_DIR/data.sqlite3:/home/q-user/.local/share/amazon-q/data.sqlite3\""
-MOUNT_ARGS+=" -v \"$HOST_Q_SHARE_DIR/settings.json:/home/q-user/.local/share/amazon-q/settings.json\""
-
-# Mount the global agents and MCP configuration
-MOUNT_ARGS+=" -v \"$HOST_Q_CONFIG_DIR:/home/q-user/.aws/amazonq\""
+# Pass GITHUB_TOKEN and GITLAB_TOKEN if available
+if [ -n "$GITHUB_TOKEN" ]; then
+    RUN_ARGS+=(-e "GITHUB_TOKEN=$GITHUB_TOKEN")
+    echo "✓ Passing GITHUB_TOKEN to container."
+fi
+if [ -n "$GITLAB_TOKEN" ]; then
+    RUN_ARGS+=(-e "GITLAB_TOKEN=$GITLAB_TOKEN")
+    echo "✓ Passing GITLAB_TOKEN to container."
+fi
 
 # Mount git and ssh configuration for seamless git operations
 if [ -f "$HOME/.gitconfig" ]; then
-    MOUNT_ARGS+=" -v \"$HOME/.gitconfig:/home/q-user/.gitconfig:ro\""
+    RUN_ARGS+=(-v "$HOME/.gitconfig:/home/q-user/.gitconfig:ro")
 fi
 if [ -d "$HOME/.ssh" ]; then
-    MOUNT_ARGS+=" -v \"$HOME/.ssh:/home/q-user/.ssh:ro\""
+    RUN_ARGS+=(-v "$HOME/.ssh:/home/q-user/.ssh:ro")
 fi
 
 # --- Run the container --- #
 echo "Starting Amazon Q CLI in Docker..."
 
-eval "docker run -it --rm \
-    $MOUNT_ARGS \
-    --workdir /workspace \
-    --name amazon-q-cli-$(basename \"$CURRENT_DIR\")-$$ \
-    $IMAGE_NAME:latest \"$@\""
+docker run "${RUN_ARGS[@]}" 
+    --workdir /workspace 
+    --name "amazon-q-cli-$(basename "$CURRENT_DIR")-$" 
+    "$IMAGE_NAME:latest" "$@" 
