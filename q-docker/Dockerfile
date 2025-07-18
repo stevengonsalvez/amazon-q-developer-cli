@@ -34,10 +34,19 @@ RUN groupadd --gid $USER_GID q-user || true &&     useradd --uid $USER_UID --gid
 # Switch to the non-root user
 USER q-user
 WORKDIR /home/q-user
-ENV PATH="/home/q-user/.local/bin:${PATH}"
 
 # Install the Amazon Q CLI
-RUN curl --proto '=https' --tlsv1.2 -sSf "https://desktop-release.q.us-east-1.amazonaws.com/latest/q-aarch64-linux.zip" -o "q.zip" &&     unzip q.zip &&     ./q/install.sh --no-confirm &&     rm q.zip && rm -rf q
+# Determine architecture and download the appropriate q CLI binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        curl --proto '=https' --tlsv1.2 -sSf "https://desktop-release.q.us-east-1.amazonaws.com/latest/q-x86_64-linux.zip" -o "q.zip"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        curl --proto '=https' --tlsv1.2 -sSf "https://desktop-release.q.us-east-1.amazonaws.com/latest/q-aarch64-linux.zip" -o "q.zip"; \
+    else \
+        echo "Unsupported architecture: $ARCH"; exit 1; \
+    fi && \
+    unzip q.zip &&     ./q/install.sh --no-confirm &&     rm q.zip && rm -rf q
+ENV PATH="/home/q-user/.local/bin:${PATH}"
 ENV PATH="/home/q-user/.local/bin:${PATH}"
 
 # Set up directories for MCP server installation
@@ -49,7 +58,6 @@ RUN chmod +x ./install-mcp-servers.sh
 
 # Copy the startup script into the container and make it executable
 COPY scripts/startup.sh /app/startup.sh
-RUN chmod +x /app/startup.sh
 
 # Switch back to non-root user for the rest of the setup
 USER q-user
@@ -57,7 +65,7 @@ WORKDIR /home/q-user
 
 # Run the MCP server installation script
 # This runs as the q-user to ensure configs are placed in the correct home directory
-RUN /app/install-mcp-servers.sh
+# RUN /app/install-mcp-servers.sh
 
 # Set the entrypoint to our startup script
 ENTRYPOINT ["/app/startup.sh"]

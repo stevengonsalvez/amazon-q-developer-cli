@@ -16,6 +16,20 @@ Running `q` inside Docker provides several benefits:
 - `scripts/q-docker.sh`: A wrapper script to build the Docker image and run the container with the correct volume mounts.
 - `scripts/startup.sh`: The entrypoint script inside the container that executes the `q` command.
 
+## Pre-installed Tools
+
+The Docker image comes with a set of essential developer tools pre-installed, including:
+
+- `git`: Version control
+- `curl`, `wget`: HTTP clients
+- `gh`: GitHub CLI
+- `glab`: GitLab CLI
+- `jq`: Command-line JSON processor
+- `nodejs`, `npm`: JavaScript runtime and package manager
+- `python3`: Python programming language
+- `zsh`: An extended Bourne shell with many improvements
+- `build-essential`: Compilers and libraries for building software
+
 ## How It Works
 
 The setup leverages Docker's volume mounting to share key configuration and state files from your host machine to the container.
