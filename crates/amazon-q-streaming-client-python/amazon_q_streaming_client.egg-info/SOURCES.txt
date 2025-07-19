@@ -1,0 +1,10 @@
+README.md
+setup.py
+amazon_q_streaming_client/__init__.py
+amazon_q_streaming_client/client.py
+amazon_q_streaming_client/models.py
+amazon_q_streaming_client.egg-info/PKG-INFO
+amazon_q_streaming_client.egg-info/SOURCES.txt
+amazon_q_streaming_client.egg-info/dependency_links.txt
+amazon_q_streaming_client.egg-info/requires.txt
+amazon_q_streaming_client.egg-info/top_level.txt

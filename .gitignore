@@ -51,3 +51,6 @@ book/
 run-build.sh
 
 .gemini
+.amazonq
+
+AmazonQ.md

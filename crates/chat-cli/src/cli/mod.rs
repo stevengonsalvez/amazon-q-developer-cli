@@ -93,6 +93,8 @@ pub enum RootSubcommand {
     Login(LoginArgs),
     /// Log out of Amazon Q
     Logout,
+    /// Manage user settings
+    User(user::UserArgs),
     /// Print info about the current login session
     Whoami(WhoamiArgs),
     /// Show the profile associated with this idc user
@@ -149,6 +151,7 @@ impl RootSubcommand {
             Self::Diagnostic(args) => args.execute(os).await,
             Self::Login(args) => args.execute(os).await,
             Self::Logout => user::logout(os).await,
+            Self::User(args) => args.execute(os).await,
             Self::Whoami(args) => args.execute(os).await,
             Self::Profile => user::profile(os).await,
             Self::Settings(settings_args) => settings_args.execute(os).await,
@@ -180,6 +183,7 @@ impl Display for RootSubcommand {
             Self::Issue(_) => "issue",
             Self::Version { .. } => "version",
             Self::Mcp(_) => "mcp",
+            Self::User(_) => "user",
         };
 
         write!(f, "{name}")
