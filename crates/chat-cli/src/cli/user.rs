@@ -185,6 +185,29 @@ pub async fn logout(os: &mut Os) -> Result<ExitCode> {
     Ok(ExitCode::SUCCESS)
 }
 
+pub async fn export_token(os: &mut Os) -> Result<ExitCode> {
+    eprintln!();
+    eprintln!("{}", "Security Warning:".yellow().bold());
+    eprintln!("{}", "Never share your authentication tokens.".yellow());
+    eprintln!("{}", "These tokens grant access to your AWS account.".yellow());
+    eprintln!();
+
+    let token = BuilderIdToken::load(&os.database).await?;
+    match token {
+        Some(token) => {
+            let json = json!({
+                "accessToken": token.access_token.0,
+                "refreshToken": token.refresh_token.map(|s| s.0),
+            });
+            println!("{}", serde_json::to_string_pretty(&json)?);
+            Ok(ExitCode::SUCCESS)
+        }
+        None => {
+            bail!("Not logged in");
+        }
+    }
+}
+
 #[derive(Args, Debug, PartialEq, Eq, Clone, Default)]
 pub struct WhoamiArgs {
     /// Output format to use
@@ -273,9 +296,28 @@ impl Display for AuthMethod {
     }
 }
 
+
+
 #[derive(Subcommand, Debug, PartialEq, Eq)]
+#[derive(Clone)]
 pub enum UserSubcommand {
     Profile,
+    ExportToken,
+}
+
+#[derive(Args, Debug, PartialEq, Eq, Clone)]
+pub struct UserArgs {
+    #[command(subcommand)]
+    pub subcommand: UserSubcommand,
+}
+
+impl UserArgs {
+    pub async fn execute(self, os: &mut Os) -> Result<ExitCode> {
+        match self.subcommand {
+            UserSubcommand::Profile => profile(os).await,
+            UserSubcommand::ExportToken => export_token(os).await,
+        }
+    }
 }
 
 async fn try_device_authorization(os: &mut Os, start_url: Option<String>, region: Option<String>) -> Result<()> {

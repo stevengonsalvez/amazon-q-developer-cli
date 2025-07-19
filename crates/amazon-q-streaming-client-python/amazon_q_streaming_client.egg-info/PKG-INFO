@@ -1,0 +1,50 @@
+Metadata-Version: 2.4
+Name: amazon-q-streaming-client
+Version: 0.1.0
+Summary: A Python client for the Amazon Q streaming API
+Home-page: https://github.com/aws-samples/amazon-q-developer-cli
+Author: Amazon Q Developer CLI
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: httpx
+Requires-Dist: pydantic
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Amazon Q Streaming Client (Python)
+
+This package provides a Python client for interacting with the Amazon Q streaming API. It is designed to be used by developers building custom tools and agentic frameworks that leverage Amazon Q's capabilities.
+
+## Installation
+
+```bash
+pip install amazon-q-streaming-client
+```
+
+## Usage
+
+```python
+import asyncio
+from amazon_q_streaming_client import QStreamingClient
+
+async def main():
+    # Replace with your actual access token
+    access_token = "YOUR_ACCESS_TOKEN"
+    client = QStreamingClient(access_token)
+
+    async for event in client.generate_assistant_response("Hello, Amazon Q!"):
+        if event.text_response:
+            print(event.text_response.text)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
