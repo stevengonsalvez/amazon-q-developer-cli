@@ -65,7 +65,7 @@ WORKDIR /home/q-user
 
 # Run the MCP server installation script
 # This runs as the q-user to ensure configs are placed in the correct home directory
-# RUN /app/install-mcp-servers.sh
+RUN /app/install-mcp-servers.sh
 
 # Set the entrypoint to our startup script
 ENTRYPOINT ["/app/startup.sh"]

@@ -7,7 +7,7 @@ set -e
 # Get the absolute path of the current directory
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 # --- Configuration --- #
 IMAGE_NAME="amazon-q-cli"
@@ -62,11 +62,9 @@ fi
 
 # --- Prepare Docker run arguments --- #
 RUN_ARGS=(
-    -it
     --rm
     -v "$CURRENT_DIR:/workspace"
-    -v "$HOST_Q_SHARE_DIR/data.sqlite3:/home/q-user/.local/share/amazon-q/data.sqlite3"
-    -v "$HOST_Q_SHARE_DIR/settings.json:/home/q-user/.local/share/amazon-q/settings.json"
+    -v "$HOST_Q_SHARE_DIR:/home/q-user/.local/share/amazon-q"
     -v "$HOST_Q_CONFIG_DIR:/home/q-user/.aws/amazonq"
 )
 
@@ -91,7 +89,17 @@ fi
 # --- Run the container --- #
 echo "Starting Amazon Q CLI in Docker..."
 
-docker run "${RUN_ARGS[@]}" 
-    --workdir /workspace 
-    --name "amazon-q-cli-$(basename "$CURRENT_DIR")-$" 
-    "$IMAGE_NAME:latest" "$@" 
+# Generate a unique container name, ensuring it's lowercase.
+CONTAINER_NAME="amazon-q-cli-$(basename "$CURRENT_DIR" | tr '[:upper:]' '[:lower:]')"
+
+# If no args are passed, default to interactive chat
+if [ $# -eq 0 ]; then
+    set -- "chat" "--trust-all-tools"
+fi
+
+docker run "${RUN_ARGS[@]}" \
+    -it \
+    --workdir /workspace \
+    --name "$CONTAINER_NAME" \
+    "$IMAGE_NAME:latest" "$@"
+ 
