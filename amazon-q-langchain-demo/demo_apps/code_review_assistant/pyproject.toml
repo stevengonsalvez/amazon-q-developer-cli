@@ -1,0 +1,55 @@
+[project]
+name = "amazon-q-code-review-assistant"
+version = "0.1.0"
+description = "Advanced code review assistant using Amazon Q and LangGraph"
+authors = [
+    {name = "Amazon Q Team", email = "amazonq@amazon.com"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "langchain>=0.1.0",
+    "langchain-core>=0.1.0", 
+    "langgraph>=0.0.40",
+    "streamlit>=1.28.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "plotly>=5.15.0",
+    "pandas>=2.0.0",
+    "pygments>=2.15.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.5.0",
+    "ruff>=0.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["workflows", "components", "utils"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
